@@ -1,4 +1,5 @@
 name: Build & Deploy Spring app
+
 on:
   push:
     branches:
@@ -6,8 +7,25 @@ on:
 
 jobs:
   build-deploy:
-    name: Build and Deploy Spring boot for beginners
+    name: Build and Deploy Spring Boot
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: employee_directory
+          MYSQL_USER: springstudent
+          MYSQL_PASSWORD: SpringStudent
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,10 +36,16 @@ jobs:
           java-version: '21'
           distribution: 'corretto'
 
-      - name: Unit Tests
-        run: mvn -B test --file spring-mvc-security-employee/spring-mvc-security/pom.xml
-
-      - name: Build the application
+      - name: Wait for MySQL to be ready
         run: |
-          mvn clean 
-          mvn -B package --file spring-mvc-security-employee/spring-mvc-security/pom.xml
+          sudo apt-get update && sudo apt-get install -y mysql-client
+          until mysql -h 127.0.0.1 -P 3306 -u springstudent -pSpringStudent -e "SELECT 1"; do
+            echo "Waiting for MySQL..."
+            sleep 5
+          done
+
+      - name: Run Unit Tests
+        run: mvn test --file spring-mvc-security-employee/spring-mvc-security/pom.xml
+
+      - name: Build the Application
+        run: mvn clean package --file spring-mvc-security-employee/spring-mvc-security/pom.xml
