@@ -70,7 +70,7 @@ jobs:
       - name: Push to DockerHub
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: Dockerfile
+          context: ./spring-mvc-security-employee/spring-mvc-security
+          file: ./spring-mvc-security-employee/spring-mvc-security/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/spring-mvc-security:latest
